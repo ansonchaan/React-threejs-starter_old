@@ -1,0 +1,15 @@
+@import '../../scss/settings';
+
+#nav{
+    position: fixed;
+    top:0;
+    left:50%;
+    z-index: 9;
+    li{
+        display: inline-block;
+        padding: rem-calc(10 10);
+        a{
+            color:#999;
+        }
+    }
+}
