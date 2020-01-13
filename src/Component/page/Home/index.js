@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 // import { useSelector } from 'react-redux';
-import { initStats, initGUI, removeStats, removeGUI, getScreenSizeIn3dWorld } from './globalFuncFor3d';
+import { initStats, initGUI, removeStats, removeGUI, getScreenSizeIn3dWorld, draggingSystem } from './globalFuncFor3d';
 import * as THREE from 'three';
 import './home.scss';
 
@@ -18,6 +18,7 @@ const Home = props => {
 
         // light
         let ambientLight = undefined;
+        let pointLight = undefined;
 
         // items array
         let geometryItems = [];
@@ -33,11 +34,14 @@ const Home = props => {
             cameraZ:{ value:5, min:0, max:20, name:'Camera Z' },
             scale:{ value:10, min:0, max:50 }
         }
+
+        // dragging system
+        let dragging = null;
         
         const initEngine = () => {
             scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 15;
+            camera = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 10, 15);
             
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setPixelRatio(window.devicePixelRatio);
@@ -53,15 +57,19 @@ const Home = props => {
             stats = initStats();
             initGUI(options);
 
+            dragging = draggingSystem(camera);
+
             initLight();
             initMesh();
+
+            
         }
 
         const initLight = () => {
             ambientLight = new THREE.AmbientLight(0x999999);
 
-            const pointLight = new THREE.PointLight(0xffffff, 1, 100);
-            pointLight.position.set(2, 2, 2);
+            pointLight = new THREE.PointLight(0xffffff, 1, 100);
+            pointLight.position.set(5, 4, 3);
             pointLight.add(new THREE.Mesh( new THREE.SphereGeometry(.03,8,8), new THREE.MeshBasicMaterial({ color: 0xffffff })))
 
             scene.add(pointLight);
@@ -70,7 +78,7 @@ const Home = props => {
       
         const initMesh = () => {
             const material = new THREE.MeshPhongMaterial({ color: 0xffffff });
-            const geometry = new THREE.BoxGeometry(1,1,1);
+            const geometry = new THREE.BoxGeometry(5,5,5);
             const mesh = new THREE.Mesh(geometry, material);
             
             materialItems.push(material);
@@ -82,7 +90,9 @@ const Home = props => {
         };
 
         const draw = () => {
-            meshItems[0].rotation.y+=.01;
+            // pointLight.position.x = Math.cos(performance.now()/1000) * 5;
+            // pointLight.position.y = Math.sin(performance.now()/1000 * 5)/1.5;
+            // pointLight.position.z = Math.sin(performance.now()/1000) * 5;
         }
         
         const update = () => {
@@ -139,9 +149,12 @@ const Home = props => {
         }
 
         const addEvent = () => {
+            if(dragging) dragging.enable();
             window.addEventListener("resize", onWindowResize);
         }
+
         const removeEvent = () => {
+            if(dragging) dragging.disable();
             window.removeEventListener("resize", onWindowResize);
         }
 
