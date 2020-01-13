@@ -84,47 +84,31 @@ export const draggingSystem = (camera) => {
     let oldMousePos = new THREE.Vector2().copy(vector);
     let radius = camera.position.z;
     let tempPos = new THREE.Vector3();
-    let easePos = new THREE.Vector3();
+    let easeMouse = new THREE.Vector2();
     let useEase = true;
 
     const init = () => {
-        setCameraPosition(vector);
-        // easePos.copy(tempPos);
-        // onAnim();
+        onAnim();
     }
 
     // rotate camera with 3d coordinate which is using mouse position
     const setCameraPosition = (vector) => {
-        // if(useEase){
-            // tempPos.x = radius * Math.sin(vector.x * Math.PI/180) * Math.cos(vector.y * Math.PI/180);
-            // tempPos.y = radius * Math.sin(vector.y * Math.PI/180);
-            // tempPos.z = radius * Math.cos(vector.x * Math.PI/180) * Math.cos(vector.y * Math.PI/180);
-
-        // }
-        // else{
-            camera.position.x = radius * (Math.sin(vector.x * Math.PI/180) * Math.cos(vector.y * Math.PI/180));
-            camera.position.y = radius * Math.sin(vector.y * Math.PI/180);
-            camera.position.z = radius * Math.cos(vector.x * Math.PI/180) * Math.cos(vector.y * Math.PI/180);
-        // }
+        camera.position.x = radius * (Math.sin(vector.x * Math.PI/180) * Math.cos(vector.y * Math.PI/180));
+        camera.position.y = radius * Math.sin(vector.y * Math.PI/180);
+        camera.position.z = radius * Math.cos(vector.x * Math.PI/180) * Math.cos(vector.y * Math.PI/180);
         camera.updateMatrix();
     }
 
-    // const update = () => {
-    //     easePos.x += (tempPos.x - easePos.x) * .1;
-    //     easePos.y += (tempPos.y - easePos.y) * .1;
-    //     easePos.z += (tempPos.z - easePos.z) * .1;
+    const update = () => {
+        easeMouse.x += (mouse.x - easeMouse.x) * .1;
+        easeMouse.y += (mouse.y - easeMouse.y) * .1;
+        setCameraPosition(easeMouse);
+    }
 
-    //     camera.position.x = easePos.x;
-    //     camera.position.y = easePos.y;
-    //     camera.position.z = easePos.z;
-
-    //     camera.updateMatrix();
-    // }
-
-    // const onAnim = () => {
-    //     requestAnimationFrame(onAnim);
-    //     update();
-    // }
+    const onAnim = () => {
+        requestAnimationFrame(onAnim);
+        update(vector);
+    }
 
     const onMouseDown = (e) => {
         clicked = true;
@@ -140,8 +124,6 @@ export const draggingSystem = (camera) => {
                 -(startMousePos.y - e.clientY) + oldMousePos.y
             );
             mouse.y = Math.min( 90, Math.max( -90, mouse.y));
-
-            setCameraPosition(mouse);
 
             console.log('mousemove')
         }

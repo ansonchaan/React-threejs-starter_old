@@ -90,9 +90,9 @@ const Home = props => {
         };
 
         const draw = () => {
-            // pointLight.position.x = Math.cos(performance.now()/1000) * 5;
-            // pointLight.position.y = Math.sin(performance.now()/1000 * 5)/1.5;
-            // pointLight.position.z = Math.sin(performance.now()/1000) * 5;
+            pointLight.position.x = Math.cos(performance.now()/1000) * 5;
+            pointLight.position.y = Math.sin(performance.now()/1000 * 5)/1.5;
+            pointLight.position.z = Math.sin(performance.now()/1000) * 5;
         }
         
         const update = () => {
