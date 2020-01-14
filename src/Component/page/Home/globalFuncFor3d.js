@@ -79,12 +79,14 @@ export const draggingSystem = (camera) => {
     // get current camera position then convert to 2d coordinate
     const vector = cameraPositionTo2dPosition(camera);
     const mouse = new THREE.Vector2().copy(vector);
-    let clicked = false;
     let startMousePos = new THREE.Vector2();
     let oldMousePos = new THREE.Vector2().copy(vector);
     let easeMouse = new THREE.Vector2();
     let radius = camera.position.z;
     let looping = undefined;
+    let clicked = false;
+    let isPanning = false;
+    //
     let ease = .1;
     let friction = .8;
     let intensity = 1;
@@ -102,6 +104,7 @@ export const draggingSystem = (camera) => {
     }
 
     const update = () => {
+        // easing
         easeMouse.x += (mouse.x - easeMouse.x) * ease * friction;
         easeMouse.y += (mouse.y - easeMouse.y) * ease * friction;
         setCameraPosition(easeMouse);
@@ -120,6 +123,7 @@ export const draggingSystem = (camera) => {
     }
 
     const onMouseDown = (e) => {
+        isPanning = e.which === 3;
         clicked = true;
         startMousePos.set(e.clientX, e.clientY);
 
@@ -141,6 +145,7 @@ export const draggingSystem = (camera) => {
     const onMouseUp = () => {
         clicked = false;
         oldMousePos.copy(mouse);
+        isPanning = false;
         console.log('mouseup')
     }
 
