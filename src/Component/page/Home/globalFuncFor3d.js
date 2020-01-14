@@ -82,10 +82,12 @@ export const draggingSystem = (camera) => {
     let clicked = false;
     let startMousePos = new THREE.Vector2();
     let oldMousePos = new THREE.Vector2().copy(vector);
-    let radius = camera.position.z;
-    let tempPos = new THREE.Vector3();
     let easeMouse = new THREE.Vector2();
-    let useEase = true;
+    let radius = camera.position.z;
+    let looping = undefined;
+    let ease = .1;
+    let friction = .8;
+    let intensity = .3;
 
     const init = () => {
         onAnim();
@@ -100,14 +102,21 @@ export const draggingSystem = (camera) => {
     }
 
     const update = () => {
-        easeMouse.x += (mouse.x - easeMouse.x) * .1;
-        easeMouse.y += (mouse.y - easeMouse.y) * .1;
+        easeMouse.x += (mouse.x - easeMouse.x) * ease * friction;
+        easeMouse.y += (mouse.y - easeMouse.y) * ease * friction;
         setCameraPosition(easeMouse);
     }
 
     const onAnim = () => {
-        requestAnimationFrame(onAnim);
+        looping = requestAnimationFrame(onAnim);
         update(vector);
+    }
+
+    const stopAnim = () => {
+        if(looping){
+            cancelAnimationFrame(looping);
+            looping = undefined;
+        }
     }
 
     const onMouseDown = (e) => {
@@ -120,8 +129,8 @@ export const draggingSystem = (camera) => {
     const onMouseMove = (e) => {
         if(clicked){
             mouse.set(
-                (startMousePos.x - e.clientX) + oldMousePos.x, 
-                -(startMousePos.y - e.clientY) + oldMousePos.y
+                (startMousePos.x - e.clientX) * intensity + oldMousePos.x, 
+                -(startMousePos.y - e.clientY) * intensity + oldMousePos.y
             );
             mouse.y = Math.min( 90, Math.max( -90, mouse.y));
 
@@ -139,15 +148,16 @@ export const draggingSystem = (camera) => {
         document.addEventListener('mousedown', onMouseDown);
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', onMouseUp);
+        init();
     }
 
     const disable = () => {
         document.removeEventListener('mousedown', onMouseDown);
         document.removeEventListener('mousemove', onMouseMove);
         document.removeEventListener('mouseup', onMouseUp);
+        stopAnim();
     }
 
-    init();
 
     return {
         enable: enable,
