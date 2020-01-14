@@ -87,7 +87,7 @@ export const draggingSystem = (camera) => {
     let looping = undefined;
     let ease = .1;
     let friction = .8;
-    let intensity = .3;
+    let intensity = 1;
 
     const init = () => {
         onAnim();
@@ -138,23 +138,29 @@ export const draggingSystem = (camera) => {
         }
     }
 
-    const onMouseUp = (e) => {
+    const onMouseUp = () => {
         clicked = false;
         oldMousePos.copy(mouse);
         console.log('mouseup')
     }
 
+    const onContextMenu = (e) => {
+        e.preventDefault();
+    }
+
     const enable = () => {
-        document.addEventListener('mousedown', onMouseDown);
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
+        document.addEventListener('contextmenu', onContextMenu, false);
+        document.addEventListener('mousedown', onMouseDown, false);
+        document.addEventListener('mousemove', onMouseMove, false);
+        document.addEventListener('mouseup', onMouseUp, false);
         init();
     }
 
     const disable = () => {
-        document.removeEventListener('mousedown', onMouseDown);
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
+        document.removeEventListener('contextmenu', onContextMenu, false);
+        document.removeEventListener('mousedown', onMouseDown, false);
+        document.removeEventListener('mousemove', onMouseMove, false);
+        document.removeEventListener('mouseup', onMouseUp, false);
         stopAnim();
     }
 
