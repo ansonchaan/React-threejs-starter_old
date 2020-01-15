@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 // import { useSelector } from 'react-redux';
-import { initStats, initGUI, removeStats, removeGUI, getScreenSizeIn3dWorld, draggingSystem } from './globalFuncFor3d';
+import { initStats, initGUI, removeStats, removeGUI, getScreenSizeIn3dWorld, draggingSystem, devMode } from './globalFuncFor3d';
 import * as THREE from 'three';
 import './home.scss';
 
@@ -13,6 +13,7 @@ const Home = props => {
     useEffect(()=>{
         let scene = undefined,
             camera = undefined,
+            dev = undefined,
             renderer = undefined,
             screen = { width: undefined, height: undefined };
 
@@ -40,29 +41,29 @@ const Home = props => {
         
         const initEngine = () => {
             scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 10, 15);
-            
+            camera = new THREE.PerspectiveCamera(30, window.innerWidth/window.innerHeight, 50, 1000);
+            camera.position.set(0, 0, 150);
+            camera.updateMatrixWorld();
+
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setPixelRatio(window.devicePixelRatio);
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setClearColor(0xffffff, 0);
             canvasWrap.current.appendChild(renderer.domElement);
             
+
+            stats = initStats();
+            initGUI(options);
+            initLight();
+            initMesh();
+
+            dragging = draggingSystem(camera);
+            dev = devMode(camera, scene);
+            
             renderer.setAnimationLoop(function() {
                 update();
                 render();
             });
-
-            stats = initStats();
-            initGUI(options);
-
-            dragging = draggingSystem(camera);
-
-            initLight();
-            initMesh();
-
-            
         }
 
         const initLight = () => {
@@ -70,7 +71,7 @@ const Home = props => {
 
             pointLight = new THREE.PointLight(0xffffff, 1, 100);
             pointLight.position.set(5, 4, 3);
-            pointLight.add(new THREE.Mesh( new THREE.SphereGeometry(.03,8,8), new THREE.MeshBasicMaterial({ color: 0xffffff })))
+            pointLight.add(new THREE.Mesh( new THREE.SphereGeometry(2,8,8), new THREE.MeshBasicMaterial({ color: 0xffffff })))
 
             scene.add(pointLight);
             scene.add(ambientLight);
@@ -78,7 +79,7 @@ const Home = props => {
       
         const initMesh = () => {
             const material = new THREE.MeshPhongMaterial({ color: 0xffffff });
-            const geometry = new THREE.BoxGeometry(5,5,5);
+            const geometry = new THREE.BoxGeometry(10,10,10);
             const mesh = new THREE.Mesh(geometry, material);
             
             materialItems.push(material);
@@ -90,19 +91,21 @@ const Home = props => {
         };
 
         const draw = () => {
-            pointLight.position.x = Math.cos(performance.now()/1000) * 5;
-            pointLight.position.y = Math.sin(performance.now()/1000 * 5)/1.5;
-            pointLight.position.z = Math.sin(performance.now()/1000) * 5;
+            pointLight.position.x = Math.cos(performance.now()/1000) * 20;
+            pointLight.position.y = Math.sin(performance.now()/1000 *2) * 20;
+            pointLight.position.z = Math.sin(performance.now()/1000) * 20;
         }
         
         const update = () => {
             draw();
-            camera.lookAt(0, 0, 0);
             stats.update();
+            dev.cameraHelper.update();
+            dev.cameraHelper.visible = true;
         };
   
         const render = () => {
-            renderer.render(scene, camera);
+            renderer.render(scene, dev.godCamera);
+            // renderer.render(scene, camera);
         };
 
         const removeObjectIn3dWorld = () => {
