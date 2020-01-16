@@ -42,8 +42,8 @@ const Home = props => {
         const initEngine = () => {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(30, window.innerWidth/window.innerHeight, 50, 1000);
-            camera.position.set(0, 0, 150);
-            camera.updateMatrixWorld();
+            camera.position.set(0, 50, 150);
+
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setPixelRatio(window.devicePixelRatio);
@@ -58,7 +58,7 @@ const Home = props => {
             initMesh();
 
             dragging = draggingSystem(camera);
-            dev = devMode(camera, scene);
+            devMode(scene);
             
             renderer.setAnimationLoop(function() {
                 update();
@@ -99,13 +99,11 @@ const Home = props => {
         const update = () => {
             draw();
             stats.update();
-            dev.cameraHelper.update();
-            dev.cameraHelper.visible = true;
         };
   
         const render = () => {
-            renderer.render(scene, dev.godCamera);
-            // renderer.render(scene, camera);
+            // renderer.render(scene, dev.godCamera);
+            renderer.render(scene, camera);
         };
 
         const removeObjectIn3dWorld = () => {
@@ -152,12 +150,11 @@ const Home = props => {
         }
 
         const addEvent = () => {
-            if(dragging) dragging.enable();
             window.addEventListener("resize", onWindowResize);
         }
 
         const removeEvent = () => {
-            if(dragging) dragging.disable();
+            if(dragging) dragging.destroy();
             window.removeEventListener("resize", onWindowResize);
         }
 
