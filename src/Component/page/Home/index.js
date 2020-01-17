@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 // import { useSelector } from 'react-redux';
-import { initStats, initGUI, removeStats, removeGUI, getScreenSizeIn3dWorld, draggingSystem, devMode } from './globalFuncFor3d';
+import {CameraControlsSystem, initStats, initGUI, removeStats, removeGUI, getScreenSizeIn3dWorld , devMode } from './globalFuncFor3d';
 import * as THREE from 'three';
 import './home.scss';
 
@@ -57,8 +57,9 @@ const Home = props => {
             initLight();
             initMesh();
 
-            dragging = draggingSystem(camera);
-            devMode(scene);
+            dragging = new CameraControlsSystem(camera);
+            // console.log(dragging)
+            dev = devMode(scene);
             
             renderer.setAnimationLoop(function() {
                 update();
@@ -155,6 +156,7 @@ const Home = props => {
 
         const removeEvent = () => {
             if(dragging) dragging.destroy();
+            if(dev) dev.destroy();
             window.removeEventListener("resize", onWindowResize);
         }
 
