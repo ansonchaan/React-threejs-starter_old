@@ -94,11 +94,11 @@ export const CameraControlsSystem = (function(_super){
         _this.target = new THREE.Vector3();
         _this.targetEnd = _this.target.clone();
         //
-        _this.easeTheta = 0;
-        _this.easePhi = 0;
+        _this.easeTheta = _this.sphericalEnd.theta;
+        _this.easePhi = _this.sphericalEnd.phi;
         _this.easeTarget = new THREE.Vector3();
-        _this.rotationEase = .3;
-        _this.translationEase = .5;
+        _this.rotationEase = .1;
+        _this.translationEase = .1;
         _this.friction = .8;
 
         let _xColumn = new THREE.Vector3();
@@ -109,9 +109,7 @@ export const CameraControlsSystem = (function(_super){
         let clicked = false;
 
         const init = () => {
-            _this.target.set(0,0,0);
             onAnim();
-            
             document.addEventListener('mousedown', onMouseDown, false);
             document.addEventListener('contextmenu', onContextMenu, false);
         }
@@ -120,11 +118,15 @@ export const CameraControlsSystem = (function(_super){
             const theta = _this.sphericalEnd.theta + Math.PI * 2 * delta.x / window.innerHeight;
             const phi = _this.sphericalEnd.phi + Math.PI * 2 * delta.y / window.innerHeight;
             
+            this.rotateTo(theta, phi);
+
+            console.log('rotate',theta, phi);
+        }
+
+        this.rotateTo = (theta, phi) => {
             _this.sphericalEnd.theta = theta;
             _this.sphericalEnd.phi = phi;
             _this.sphericalEnd.makeSafe();
-
-            console.log('rotate',_this.spherical.theta,Math.PI * 2 * delta.x);
         }
 
         const pan = (delta) => {
@@ -136,6 +138,12 @@ export const CameraControlsSystem = (function(_super){
             const x = panSpeed * delta.x * targetDistance / window.innerHeight;
             const y = panSpeed * delta.y * targetDistance / window.innerHeight;
 
+            this.panTo(x, y);
+
+            console.log('pan',delta);
+        }
+
+        this.panTo = (x, y) => {
             _this.camera.updateMatrix();
             _xColumn.setFromMatrixColumn(_this.camera.matrix, 0);
             _yColumn.setFromMatrixColumn(_this.camera.matrix, 1);
@@ -145,8 +153,6 @@ export const CameraControlsSystem = (function(_super){
             const offset2 = _v3A.copy(_xColumn).add(_yColumn);
             _this.targetEnd.add(offset2);
             _this.target.copy(_this.targetEnd);
-
-            console.log('pan',fov);
         }
 
         const update = () => {
@@ -256,9 +262,9 @@ export const CameraControlsSystem = (function(_super){
 
     _CameraControlsSystem.prototype = Object.create( _super.prototype );
     _CameraControlsSystem.prototype.constructor = _CameraControlsSystem; // re-assign constructor
-    _CameraControlsSystem.prototype.panTo = function(){
-        console.log(this,'pan to');
-    }
+    // _CameraControlsSystem.prototype.panTo = function(){
+    //     console.log(this,'pan to');
+    // }
 
     return _CameraControlsSystem;
 }(THREE.EventDispatcher));

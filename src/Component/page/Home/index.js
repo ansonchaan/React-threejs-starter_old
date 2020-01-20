@@ -42,7 +42,7 @@ const Home = props => {
         const initEngine = () => {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(30, window.innerWidth/window.innerHeight, 50, 1000);
-            camera.position.set(0, 50, 150);
+            camera.position.set(0, 0, 150);
 
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -58,7 +58,9 @@ const Home = props => {
             initMesh();
 
             dragging = new CameraControlsSystem(camera);
-            // console.log(dragging)
+            setTimeout(()=>{
+                dragging.rotateTo(Math.sin(45 * Math.PI/180), Math.cos(45 * Math.PI/180));
+            },2000);
             dev = devMode(scene);
             
             renderer.setAnimationLoop(function() {
