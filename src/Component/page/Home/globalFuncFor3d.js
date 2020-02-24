@@ -84,6 +84,8 @@ export const CameraControlsSystem = (function(_super){
             startPos: new THREE.Vector2(),
             lastPos: new THREE.Vector2(),
             delta: new THREE.Vector2(),
+            wheelDelta: 0,
+            lastWheel: 0,
             button: {left:'rotate', right:'pan'},
             status: ''
         };
@@ -93,13 +95,19 @@ export const CameraControlsSystem = (function(_super){
         _this.sphericalEnd = _this.spherical.clone();
         _this.target = new THREE.Vector3();
         _this.targetEnd = _this.target.clone();
+        _this.zoomEnd = _this.camera.zoom;
         //
         _this.easeTheta = _this.sphericalEnd.theta;
         _this.easePhi = _this.sphericalEnd.phi;
+        _this.easeRadius = _this.sphericalEnd.radius;
         _this.easeTarget = new THREE.Vector3();
+        _this.easeZoom = _this.zoomEnd;
         _this.rotationEase = .1;
         _this.translationEase = .1;
+        _this.zoomEase = .1;
         _this.friction = .8;
+        _this.minDistance = 0
+        _this.maxDistance = Infinity;
 
         let _xColumn = new THREE.Vector3();
         let _yColumn = new THREE.Vector3();
@@ -111,6 +119,7 @@ export const CameraControlsSystem = (function(_super){
         const init = () => {
             onAnim();
             document.addEventListener('mousedown', onMouseDown, false);
+            document.addEventListener('mousewheel', onMouseWheel, false);
             document.addEventListener('contextmenu', onContextMenu, false);
         }
 
@@ -155,22 +164,50 @@ export const CameraControlsSystem = (function(_super){
             _this.target.copy(_this.targetEnd);
         }
 
+
+        const dolly = (delta) => {
+            const dollyScale = Math.pow(0.95, -delta * 1);
+            const distance = _this.sphericalEnd.radius * dollyScale;
+            _this.dollyTo(distance);
+        }
+
+        this.dollyTo = (distance) => {
+            _this.sphericalEnd.radius = THREE.Math.clamp(distance, _this.minDistance, _this.maxDistance);
+        }
+
+        const zoom = (delta) => {
+            const zoomScale = Math.pow(0.95, -delta * 1);
+            const distance = _this.camera.zoom * zoomScale;
+            _this.zoomTo(distance);
+        }
+
+        this.zoomTo = (zoom) => {
+            _this.zoomEnd = THREE.Math.clamp(zoom, 1, 5);
+        }
+
         const update = () => {
             _this.easeTheta += (_this.sphericalEnd.theta - _this.easeTheta) * _this.rotationEase * _this.friction;
             _this.easePhi += (_this.sphericalEnd.phi - _this.easePhi) * _this.rotationEase * _this.friction;
+            _this.easeRadius += (_this.sphericalEnd.radius - _this.easeRadius) * _this.rotationEase * _this.friction;
             _this.spherical.theta = _this.easeTheta;
             _this.spherical.phi = _this.easePhi;
+            _this.spherical.radius = _this.easeRadius;
 
             _this.easeTarget.x += (_this.targetEnd.x - _this.easeTarget.x) * _this.translationEase * _this.friction;
             _this.easeTarget.y += (_this.targetEnd.y - _this.easeTarget.y) * _this.translationEase * _this.friction;
             _this.easeTarget.z += (_this.targetEnd.z - _this.easeTarget.z) * _this.translationEase * _this.friction;
             _this.target.copy(_this.easeTarget);
+            
+            _this.easeZoom += (_this.zoomEnd - _this.easeZoom) * _this.zoomEase * _this.friction;
 
             // convert spherical to vector3
             // then add translation
             _this.camera.position.setFromSpherical(_this.spherical).add(_this.target);
             _this.camera.lookAt(_this.target);
             _this.camera.updateMatrixWorld();
+            
+            _this.camera.zoom = _this.easeZoom;
+            _this.camera.updateProjectionMatrix();
         }
 
         const onAnim = () => {
@@ -186,6 +223,8 @@ export const CameraControlsSystem = (function(_super){
         }
 
         const onMouseDown = (e) => {
+            e.preventDefault();
+
             const mx = e.clientX;
             const my = e.clientY;
             mouse.startPos.set(mx, my);
@@ -235,7 +274,6 @@ export const CameraControlsSystem = (function(_super){
                         break;
                 }
 
-
                 console.log('mousemove')
             }
         }
@@ -247,13 +285,20 @@ export const CameraControlsSystem = (function(_super){
             document.removeEventListener('mouseup', onMouseUp, false);
         }
 
+        const onMouseWheel = (e) => {
+            const y = e.deltaY/ (3 * 10);
+            dolly(y);
+            zoom(y);
+        }
+
         const onContextMenu = (e) => {
             e.preventDefault();
         }
 
         this.destroy = () => {
-            document.removeEventListener('contextmenu', onContextMenu, false);
             document.removeEventListener('mousedown', onMouseDown, false);
+            document.removeEventListener('mousewheel', onMouseWheel, false);
+            document.removeEventListener('contextmenu', onContextMenu, false);
             stopAnim();
         }
 
