@@ -26,11 +26,13 @@ export const initGUI = (options) => {
 
     for(let i=0; i<arrayOptions.length; i++){
         var key = arrayOptions[i][0];
-        if(typeof options[key] === 'function'){
-            gui.add(options, key);
+        var name = arrayOptions[i][1].name || key.charAt(0).toUpperCase() + key.slice(1);
+        const hasFunc = arrayOptions[i][1].callback;
+
+        if(hasFunc){
+            gui.add(options[key], 'callback').name(name);
         }
         else{
-            var name = arrayOptions[i][1].name || key.charAt(0).toUpperCase() + key.slice(1);
             var min = arrayOptions[i][1].min;
             var max = arrayOptions[i][1].max;
             gui.add(options[key], 'value').min(min).max(max).name(name);
@@ -102,9 +104,9 @@ export const CameraControlsSystem = (function(_super){
         _this.easeRadius = _this.sphericalEnd.radius;
         _this.easeTarget = new THREE.Vector3();
         _this.easeZoom = _this.zoomEnd;
-        _this.rotationEase = .1;
-        _this.translationEase = .1;
-        _this.zoomEase = .1;
+        _this.rotationEase = .05;
+        _this.translationEase = .05;
+        _this.zoomEase = .05;
         _this.friction = .8;
         _this.minDistance = 0
         _this.maxDistance = Infinity;
@@ -123,33 +125,31 @@ export const CameraControlsSystem = (function(_super){
             document.addEventListener('contextmenu', onContextMenu, false);
         }
 
-        const rotate = (delta) => {
-            const theta = _this.sphericalEnd.theta + Math.PI * 2 * delta.x / window.innerHeight;
-            const phi = _this.sphericalEnd.phi + Math.PI * 2 * delta.y / window.innerHeight;
-            
-            this.rotateTo(theta, phi);
 
-            console.log('rotate',theta, phi);
+        this.rotate = (theta, phi) => {
+            this.rotateTo(_this.sphericalEnd.theta + theta, _this.sphericalEnd.phi + phi);
         }
 
         this.rotateTo = (theta, phi) => {
             _this.sphericalEnd.theta = theta;
             _this.sphericalEnd.phi = phi;
             _this.sphericalEnd.makeSafe();
+            console.log('rotate',theta, phi);
         }
 
-        const pan = (delta) => {
+
+        this.pan = (dx, dy) => {
             const _camera = _this.camera;
             const offset = _v3A.copy(_camera.position).sub(_this.target);
             const fov = _camera.getEffectiveFOV() * THREE.Math.DEG2RAD;
             const targetDistance = offset.length() * Math.tan(fov * 0.5);
             const panSpeed = 2;
-            const x = panSpeed * delta.x * targetDistance / window.innerHeight;
-            const y = panSpeed * delta.y * targetDistance / window.innerHeight;
+            const x = panSpeed * dx * targetDistance / window.innerHeight;
+            const y = panSpeed * dy * targetDistance / window.innerHeight;
 
             this.panTo(x, y);
 
-            console.log('pan',delta);
+            console.log('pan',dx, dy);
         }
 
         this.panTo = (x, y) => {
@@ -175,15 +175,17 @@ export const CameraControlsSystem = (function(_super){
             _this.sphericalEnd.radius = THREE.Math.clamp(distance, _this.minDistance, _this.maxDistance);
         }
 
-        const zoom = (delta) => {
+
+        this.zoom = (delta) => {
             const zoomScale = Math.pow(0.95, -delta * 1);
             const distance = _this.camera.zoom * zoomScale;
             _this.zoomTo(distance);
         }
 
         this.zoomTo = (zoom) => {
-            _this.zoomEnd = THREE.Math.clamp(zoom, 1, 5);
+            _this.zoomEnd = THREE.Math.clamp(zoom, 1, 10);
         }
+
 
         const update = () => {
             _this.easeTheta += (_this.sphericalEnd.theta - _this.easeTheta) * _this.rotationEase * _this.friction;
@@ -263,11 +265,13 @@ export const CameraControlsSystem = (function(_super){
                 
                 switch( mouse.status ){
                     case mouse.button.left:
-                        rotate(mouse.delta);
+                        const theta = 1 * (Math.PI * 2) * -mouse.delta.x / window.innerHeight;
+                        const phi = 1 * (Math.PI * 2) * -mouse.delta.y / window.innerHeight;
+                        _this.rotate(theta, phi);
                         break;
                         
                     case mouse.button.right:
-                        pan(mouse.delta);
+                        _this.pan(mouse.delta.x, mouse.delta.y);
                         break;
         
                     default:
@@ -288,7 +292,7 @@ export const CameraControlsSystem = (function(_super){
         const onMouseWheel = (e) => {
             const y = e.deltaY/ (3 * 10);
             dolly(y);
-            zoom(y);
+            _this.zoom(y);
         }
 
         const onContextMenu = (e) => {
@@ -344,4 +348,37 @@ export const devMode = (scene) => {
     return {
         destroy: destroy
     }
+}
+
+export const lerp = (p1, p2, t) => {
+    return p1 + (p2 - p1) * t
+}
+
+export const animEase = {
+    // no easing, no acceleration
+    linear: (t) => { return t },
+    // accelerating from zero velocity
+    easeInQuad: (t) => { return t*t },
+    // decelerating to zero velocity
+    easeOutQuad: (t) => { return t*(2-t) },
+    // acceleration until halfway, then deceleration
+    easeInOutQuad: (t) => { return t<.5 ? 2*t*t : -1+(4-2*t)*t },
+    // accelerating from zero velocity 
+    easeInCubic: (t) => { return t*t*t },
+    // decelerating to zero velocity 
+    easeOutCubic: (t) => { return (--t)*t*t+1 },
+    // acceleration until halfway, then deceleration 
+    easeInOutCubic: (t) => { return t<.5 ? 4*t*t*t : (t-1)*(2*t-2)*(2*t-2)+1 },
+    // accelerating from zero velocity 
+    easeInQuart: (t) => { return t*t*t*t },
+    // decelerating to zero velocity 
+    easeOutQuart: (t) => { return 1-(--t)*t*t*t },
+    // acceleration until halfway, then deceleration
+    easeInOutQuart: (t) => { return t<.5 ? 8*t*t*t*t : 1-8*(--t)*t*t*t },
+    // accelerating from zero velocity
+    easeInQuint: (t) => { return t*t*t*t*t },
+    // decelerating to zero velocity
+    easeOutQuint: (t) => { return 1+(--t)*t*t*t*t },
+    // acceleration until halfway, then deceleration 
+    easeInOutQuint: (t) => { return t<.5 ? 16*t*t*t*t*t : 1+16*(--t)*t*t*t*t }
 }

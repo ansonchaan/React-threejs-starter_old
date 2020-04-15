@@ -32,6 +32,7 @@ const Home = props => {
 
         // options
         const options = {
+            zoomIn:{ callback:()=>{}, name:'Zoom In' },
             cameraZ:{ value:5, min:0, max:20, name:'Camera Z' },
             scale:{ value:10, min:0, max:50 }
         }
