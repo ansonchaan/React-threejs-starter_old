@@ -320,6 +320,190 @@ export const CameraControlsSystem = (function(_super){
 
 
 
+export const ObjectControl = (function(_super){
+    const _ObjectControl = function(mesh){
+        const _this = _super.call(this) || this;
+        const targetMesh = mesh;
+        const mouse = {
+            offset: new THREE.Vector2(),
+            prevPos: new THREE.Vector2(),
+            startPos: new THREE.Vector2(),
+            lastPos: new THREE.Vector2(),
+            delta: new THREE.Vector2(),
+            wheelDelta: 0,
+            lastWheel: 0,
+            button: {left:'rotate', right:'pan'},
+            status: ''
+        };
+        let clicked = false;
+        // let thetaEnd = 0;
+        // let phiEnd = 0;
+        let thetaEase = 0;
+        let phiEase = 0;
+        const friction = .8;
+        const sphericalEnd = new THREE.Spherical();
+        let auotRotate = 0;
+        let disableAuto = false;
+        let disableEase = false;
+        let disable = false;
+        // let numofTheta = 0;
+        // let numofPhi = 0;
+
+        const init = () => {
+            document.addEventListener('mousedown', onMouseDown, false);
+            document.addEventListener('touchstart', onMouseDown, false);
+            document.addEventListener('contextmenu', onContextMenu, false);
+        }
+
+        this.draw = () => {
+            if(!clicked && !disableAuto) auotRotate += 0.001;
+            if(!disableEase){
+                thetaEase += ((sphericalEnd.theta + auotRotate) - thetaEase) * .05 * friction;
+                phiEase += ((sphericalEnd.phi) - phiEase) * .05 * friction;
+            }
+            else{
+                thetaEase = sphericalEnd.theta;
+                phiEase = sphericalEnd.phi;
+            }
+            
+
+            targetMesh.rotation.set(phiEase, thetaEase, 0);
+        }
+
+        const rotate = (theta, phi) => {
+            if(disableEase) disableEase = false;
+
+            sphericalEnd.theta = sphericalEnd.theta + theta;
+            sphericalEnd.phi = Math.min(90*Math.PI/180, Math.max(-90*Math.PI/180, sphericalEnd.phi + phi));
+        }
+
+        this.setRotate = (theta, phi) => {
+            if(!disableEase){
+                disableEase = true;
+                auotRotate = 0;
+            }
+
+            sphericalEnd.theta = theta;
+            sphericalEnd.phi = phi;
+        }
+
+        this.getCurrentThetaPhi = () => {
+            return {theta:thetaEase, phi:phiEase};
+        }
+
+        const onMouseDown = (event) => {
+            if(!event.touches) event.preventDefault();
+            let e = (event.touches? event.touches[0]: event);
+
+            const mx = e.clientX;
+            const my = e.clientY;
+            mouse.startPos.set(mx, my);
+            mouse.lastPos.set(mx, my);
+              
+            if(!disable)
+                clicked = true;
+            // switch( e.button ){
+            //     case 0:
+            //         mouse.status = mouse.button.left;
+            //         break;
+                    
+            //     // case 2:
+            //     //     mouse.status = mouse.button.right;
+            //     //     break;
+
+            //     default:
+            //         break;
+            // }
+
+            
+            document.addEventListener('mousemove', onMouseMove, false);
+            document.addEventListener('mouseup', onMouseUp, false);
+            document.addEventListener('touchmove', onMouseMove, false);
+            document.addEventListener('touchend', onMouseUp, false);
+
+            // console.log('mousedown')
+        }
+
+        const onMouseMove = (event) => {
+            if(clicked && !disable){
+                let e = (event.touches? event.touches[0]: event);
+                const mx = e.clientX;
+                const my = e.clientY;
+
+                mouse.offset.set(mouse.startPos.x - mx, mouse.startPos.y - my);
+
+                mouse.delta.set(-(mouse.lastPos.x - mx), -(mouse.lastPos.y - my));
+                mouse.lastPos.set(mx,my);
+                
+                // switch( mouse.status ){
+                //     case mouse.button.left:
+                        const theta = 1 * (Math.PI * 2) * mouse.delta.x / window.innerHeight;
+                        const phi = 1 * (Math.PI * 2) * mouse.delta.y / window.innerHeight;
+                        rotate(theta, phi);
+                        // break;
+                        
+                    // case mouse.button.right:
+                    //     _this.pan(mouse.delta.x, mouse.delta.y);
+                    //     break;
+        
+                //     default:
+                //         break;
+                // }
+            }
+        }
+
+        const onMouseUp = () => {
+            clicked = false;
+            disableAuto = false;
+            document.removeEventListener('mousemove', onMouseMove, false);
+            document.removeEventListener('mouseup', onMouseUp, false);
+
+            document.removeEventListener('touchmove', onMouseMove, false);
+            document.removeEventListener('touchend', onMouseUp, false);
+        }
+
+        const onContextMenu = (e) => {
+            e.preventDefault();
+        }
+        
+        this.enableAutoRotate = () => {
+            disableAuto = false;
+            disableEase = false;
+            auotRotate = 0;
+        }
+
+        this.disableAutoRotate = () => {
+            disableAuto = true;
+        }
+
+        this.enable = () => {
+            if(disable){
+                disable = false;
+            }
+        }
+
+        this.disable = () => {
+            if(!disable){
+                disable = true;
+            }
+        }
+
+        this.destroy = () => {
+            document.removeEventListener('mousedown', onMouseDown, false);
+            document.removeEventListener('touchstart', onMouseDown, false);
+            document.removeEventListener('contextmenu', onContextMenu, false);
+        }
+
+        init();
+    }
+
+    _ObjectControl.prototype = Object.create( _super.prototype );
+    _ObjectControl.prototype.constructor = _ObjectControl; // re-assign constructor
+
+    return _ObjectControl;
+}(THREE.EventDispatcher))
+
+
 export const devMode = (scene) => {
     const axesHelper = new THREE.AxesHelper( 50 );
     scene.add( axesHelper );
